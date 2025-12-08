@@ -277,6 +277,61 @@ def main():
         print(f"ERROR: Failed to call Docx-to-PDF API: {e}")
         return 1
     
+    # Step 12: Stamp barcode image on each page of the PDF
+    print("\n\n" + "#"*70)
+    print("# STEP 12: Stamping barcode image on each page of the PDF")
+    print("#"*70)
+    
+    stamp_api_url = "https://platform.dev-capability.zinnia.com/pdfgeneration-service/pdf/stamp-image"
+    barcode_image = pdfgen_test_folder / "sample_barcode.jpg"
+    
+    # Get the number of pages in the PDF
+    page_count = get_pdf_page_count(output_pdf_file)
+    if page_count is None or page_count <= 0:
+        print("ERROR: Could not determine PDF page count")
+        return 1
+    
+    print(f"PDF has {page_count} page(s)")
+    
+    # Stamp each page
+    for page in range(1, page_count + 1):
+        print(f"\n{'='*60}")
+        print(f"Stamping page {page} of {page_count}")
+        print('='*60)
+        
+        # Create a temporary file for the output
+        temp_output = test_output_folder / "output_temp.pdf"
+        
+        try:
+            result = subprocess.run(
+                [
+                    "curl", "-X", "POST",
+                    "-F", f"pdf=@{output_pdf_file}",
+                    "-F", f"image=@{barcode_image}",
+                    f"{stamp_api_url}?x=204&y=220.8&width=6.4&height=45.2&units=mm&anchor=top-left&page={page}",
+                    "-o", str(temp_output)
+                ],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.stderr:
+                print(f"STDERR: {result.stderr}")
+            
+            if result.returncode != 0:
+                print(f"ERROR: Stamp API failed for page {page} with return code {result.returncode}")
+                return 1
+            
+            # Replace original PDF with stamped version
+            shutil.move(str(temp_output), str(output_pdf_file))
+            print(f"Page {page} stamped successfully")
+            
+        except Exception as e:
+            print(f"ERROR: Failed to stamp page {page}: {e}")
+            return 1
+    
+    print(f"\nAll {page_count} pages stamped successfully!")
+    
     # Done!
     print("\n\n" + "="*70)
     print("PIPELINE COMPLETED SUCCESSFULLY!")
@@ -285,6 +340,67 @@ def main():
     print(f"Final PDF location: {output_pdf_file}")
     
     return 0
+
+
+def get_pdf_page_count(pdf_path: Path) -> int:
+    """Get the number of pages in a PDF file."""
+    import subprocess
+    import re
+    
+    # Try using mdls (macOS) first
+    try:
+        result = subprocess.run(
+            ["mdls", "-name", "kMDItemNumberOfPages", str(pdf_path)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            # Parse output like: kMDItemNumberOfPages = 5
+            match = re.search(r'kMDItemNumberOfPages\s*=\s*(\d+)', result.stdout)
+            if match:
+                return int(match.group(1))
+    except Exception:
+        pass
+    
+    # Try using pdfinfo (if poppler is installed)
+    try:
+        result = subprocess.run(
+            ["pdfinfo", str(pdf_path)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            # Parse output like: Pages:          5
+            match = re.search(r'Pages:\s*(\d+)', result.stdout)
+            if match:
+                return int(match.group(1))
+    except Exception:
+        pass
+    
+    # Fallback: parse PDF file directly to find page count
+    try:
+        with open(pdf_path, 'rb') as f:
+            content = f.read()
+            # Look for /Type /Page entries (not /Pages)
+            # This is a simple heuristic
+            count = content.count(b'/Type /Page')
+            # Subtract /Type /Pages entries
+            pages_count = content.count(b'/Type /Pages')
+            return count - pages_count if count > pages_count else count
+    except Exception:
+        pass
+    
+    # Last resort: try to find /Count in the PDF
+    try:
+        with open(pdf_path, 'rb') as f:
+            content = f.read().decode('latin-1')
+            match = re.search(r'/Count\s+(\d+)', content)
+            if match:
+                return int(match.group(1))
+    except Exception:
+        pass
+    
+    return None
 
 
 if __name__ == "__main__":
