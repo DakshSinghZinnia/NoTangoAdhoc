@@ -195,12 +195,27 @@ public class ExprEval {
         eaml.add(entry("LetterData/BR43","If (LetterData/DocInfo/ClientName == 'Sammons', ' visit our website at www.srslivewellservice.com or', If (LetterData/DocInfo/ClientName == 'GLAC', ' visit our website at InsuranceAccountServices.com or', ''))"));
         eaml.add(entry("LetterData/GR_Slife","If(LetterData/ClientId =='MWOA','certificate',If(PlanCode_Lookup/ProductType=='VUL' || PlanCode_Lookup/ProductType =='Life','policy','contract'))"));
 
+        List<Map.Entry<String, String>> TangoVariables = new ArrayList<>();
+        TangoVariables.add(entry("Document/System/SheetNo","1"));
+        TangoVariables.add(entry("Document/System/SheetCount","1"));
+        TangoVariables.add(entry("Packaging/BannerFlag","False"));
+        TangoVariables.add(entry("Packaging/Mailing_Flag","hide"));
+        TangoVariables.add(entry("Document/System/PageNo","1"));
+        TangoVariables.add(entry("DocInfo/DocCount","1"));
+        TangoVariables.add(entry("PlanCode_Lookup/ENV_BAR","1"));
+
+        List<Map.Entry<String, String>> barcode = new ArrayList<>();
+        barcode.add(entry("Barcode/value","(if(Document/System/SheetNo == 1 && Packaging/BannerFlag == 'True' || (Packaging/Mailing_Flag == 'show' && (Document/System/SheetNo == 1 || Document/System/SheetNo == 2)) || (Packaging/BannerFlag == 'True' && Packaging/Mailing_Flag == 'show' && (Document/System/SheetNo == 2 || Document/System/SheetNo == 3)),'', ('*'+if((Document/System/SheetNo)==(Document/System/SheetCount),1,0) + MaskNumber((ToInt((Document/System/PageNo))+(Document/System/PageNo)),'###','000') + if(LessThan((DocInfo/DocCount),11),(DocInfo/DocCount-1),if(LessThan((DocInfo/DocCount),37),SubString('ABCDEFGHIJKLMNOPQRSTUVWXYZ',(DocInfo/DocCount-10),1),(DocInfo/DocCount))) + if(PlanCode_Lookup/ENV_BAR == '2', 'G', if(PlanCode_Lookup/ENV_BAR == '3', '8', if(PlanCode_Lookup/ENV_BAR == '4', '4', if(PlanCode_Lookup/ENV_BAR == '5', '2', '0')))) + if(PlanCode_Lookup/ENV_BAR == '6', 'G', if(PlanCode_Lookup/ENV_BAR == '7', '8', '0')) + '*')))"));
+
+
         nodes.add(node0);
         nodes.add(node1);
         nodes.add(node2);
         nodes.add(node3);
         nodes.add(node4);
         nodes.add(eaml);
+        nodes.add(TangoVariables);
+        nodes.add(barcode);
 
         return nodes;
     }
@@ -508,22 +523,26 @@ public class ExprEval {
         EOF
     }
     static final class Token {
-        final TokType type; final String text;
-        Token(TokType t, String s){ type = t; text = s; }
-        public String toString(){ return type + (text != null ? "(" + text + ")" : ""); }
+        final TokType type; final String text; final int position;
+        Token(TokType t, String s, int pos){ type = t; text = s; position = pos; }
+        public String toString(){ return type + (text != null ? "(" + text + ")" : "") + "@" + position; }
     }
     static final class Lexer {
         private final String s; private int i=0;
         Lexer(String s){ this.s = s; }
+        int getPosition(){ return i; }
+        String getSource(){ return s; }
         Token next(){
-            skipWs(); if (i >= s.length()) return new Token(TokType.EOF, null);
+            skipWs(); 
+            int pos = i;
+            if (i >= s.length()) return new Token(TokType.EOF, null, pos);
             char c = s.charAt(i);
             if (isIdentStart(c)){
                 int start=i++; while(i<s.length() && isIdentPart(s.charAt(i))) i++;
                 String ident = s.substring(start,i);
-                if ("true".equals(ident)) return new Token(TokType.TRUE, ident);
-                if ("false".equals(ident)) return new Token(TokType.FALSE, ident);
-                return new Token(TokType.IDENT, ident);
+                if ("true".equals(ident)) return new Token(TokType.TRUE, ident, pos);
+                if ("false".equals(ident)) return new Token(TokType.FALSE, ident, pos);
+                return new Token(TokType.IDENT, ident, pos);
             }
             if (Character.isDigit(c)){
                 int start = i++;
@@ -535,7 +554,7 @@ public class ExprEval {
                         while (i<s.length() && Character.isDigit(s.charAt(i))) i++;
                     }
                 }
-                return new Token(TokType.NUMBER, s.substring(start,i));
+                return new Token(TokType.NUMBER, s.substring(start,i), pos);
             }
             if (c=='\'' || c=='"'){
                 char q=c; i++; StringBuilder sb = new StringBuilder();
@@ -543,7 +562,7 @@ public class ExprEval {
                     char ch = s.charAt(i++);
                     if (ch==q) break;
                     if (ch=='\\'){
-                        if (i>=s.length()) throw new EvalException("PARSE_ERROR: unfinished escape");
+                        if (i>=s.length()) throw new EvalException(formatError("unfinished escape", pos, s));
                         char e = s.charAt(i++);
                         switch(e){
                             case '\\': sb.append('\\'); break;
@@ -553,43 +572,43 @@ public class ExprEval {
                             case 'r': sb.append('\r'); break;
                             case 't': sb.append('\t'); break;
                             case 'u': {
-                                if (i+3>=s.length()) throw new EvalException("PARSE_ERROR: bad \\u escape");
+                                if (i+3>=s.length()) throw new EvalException(formatError("bad \\u escape", pos, s));
                                 String hex = s.substring(i, i+4); i+=4;
-                                try { sb.append((char) Integer.parseInt(hex,16)); } catch(Exception ex){ throw new EvalException("PARSE_ERROR: bad \\u escape"); }
+                                try { sb.append((char) Integer.parseInt(hex,16)); } catch(Exception ex){ throw new EvalException(formatError("bad \\u escape", pos, s)); }
                                 break;
                             }
                             default: sb.append(e);
                         }
                     } else sb.append(ch);
                 }
-                return new Token(TokType.STRING, sb.toString());
+                return new Token(TokType.STRING, sb.toString(), pos);
             }
             if (i+1 < s.length()){
                 String two = s.substring(i, i+2);
                 switch(two){
-                    case "&&": i+=2; return new Token(TokType.ANDAND, "&&");
-                    case "||": i+=2; return new Token(TokType.OROR, "||");
-                    case "==": i+=2; return new Token(TokType.EQ, "==");
-                    case "!=": i+=2; return new Token(TokType.NE, "!=");
-                    case "<=": i+=2; return new Token(TokType.LE, "<=");
-                    case ">=": i+=2; return new Token(TokType.GE, ">=");
+                    case "&&": i+=2; return new Token(TokType.ANDAND, "&&", pos);
+                    case "||": i+=2; return new Token(TokType.OROR, "||", pos);
+                    case "==": i+=2; return new Token(TokType.EQ, "==", pos);
+                    case "!=": i+=2; return new Token(TokType.NE, "!=", pos);
+                    case "<=": i+=2; return new Token(TokType.LE, "<=", pos);
+                    case ">=": i+=2; return new Token(TokType.GE, ">=", pos);
                 }
             }
             i++;
             switch(c){
-                case '(' : return new Token(TokType.LPAREN,"(");
-                case ')' : return new Token(TokType.RPAREN,")");
-                case ',' : return new Token(TokType.COMMA,",");
-                case '+' : return new Token(TokType.PLUS,"+");
-                case '-' : return new Token(TokType.MINUS,"-");
-                case '*' : return new Token(TokType.STAR,"*");
-                case '/' : return new Token(TokType.SLASH,"/");
-                case '%' : return new Token(TokType.PERCENT,"%");
-                case '<' : return new Token(TokType.LT,"<");
-                case '>' : return new Token(TokType.GT,">");
+                case '(' : return new Token(TokType.LPAREN,"(", pos);
+                case ')' : return new Token(TokType.RPAREN,")", pos);
+                case ',' : return new Token(TokType.COMMA,",", pos);
+                case '+' : return new Token(TokType.PLUS,"+", pos);
+                case '-' : return new Token(TokType.MINUS,"-", pos);
+                case '*' : return new Token(TokType.STAR,"*", pos);
+                case '/' : return new Token(TokType.SLASH,"/", pos);
+                case '%' : return new Token(TokType.PERCENT,"%", pos);
+                case '<' : return new Token(TokType.LT,"<", pos);
+                case '>' : return new Token(TokType.GT,">", pos);
                 case '&' :
-                case '|' : throw new EvalException("PARSE_ERROR: single '&' or '|' not allowed");
-                default: throw new EvalException("PARSE_ERROR: unexpected char '" + c + "'");
+                case '|' : throw new EvalException(formatError("single '&' or '|' not allowed", pos, s));
+                default: throw new EvalException(formatError("unexpected char '" + c + "'", pos, s));
             }
         }
         private void skipWs(){ while(i<s.length()){ char c=s.charAt(i); if (c==' '||c=='\t'||c=='\n'||c=='\r') i++; else break; } }
@@ -600,11 +619,26 @@ public class ExprEval {
     interface ExprNode { Value eval(Context ctx); }
 
     static final class Parser {
-        private final Lexer lex; private Token la;
-        Parser(Lexer lex){ this.lex = lex; la = lex.next(); }
-        private Token eat(TokType t){ if (la.type != t) throw new EvalException("PARSE_ERROR: expected " + t + " but got " + la.type); Token cur=la; la = lex.next(); return cur; }
+        private final Lexer lex; private Token la; private final String source;
+        Parser(Lexer lex){ 
+            this.lex = lex; 
+            this.source = lex.getSource();
+            la = lex.next(); 
+        }
+        private Token eat(TokType t){ 
+            if (la.type != t) {
+                throw new EvalException(formatError("expected " + t + " but got " + la.type, la.position, source));
+            }
+            Token cur=la; la = lex.next(); return cur; 
+        }
         private boolean look(TokType t){ return la.type == t; }
-        ExprNode parse(){ ExprNode n = parseExpr(); if (la.type != TokType.EOF) throw new EvalException("PARSE_ERROR: unexpected token " + la); return n; }
+        ExprNode parse(){ 
+            ExprNode n = parseExpr(); 
+            if (la.type != TokType.EOF) {
+                throw new EvalException(formatError("unexpected token " + la.type, la.position, source));
+            }
+            return n; 
+        }
         private ExprNode parseExpr(){ return parseOr(); }
         private ExprNode parseOr(){ ExprNode left = parseAnd(); while(look(TokType.OROR)){ eat(TokType.OROR); left = new BinOp("||", left, parseAnd()); } return left; }
         private ExprNode parseAnd(){ ExprNode left = parseRel(); while(look(TokType.ANDAND)){ eat(TokType.ANDAND); left = new BinOp("&&", left, parseRel()); } return left; }
@@ -660,9 +694,30 @@ public class ExprEval {
                     }
                 }
                 case LPAREN: { eat(TokType.LPAREN); ExprNode n = parseExpr(); eat(TokType.RPAREN); return n; }
-                default: throw new EvalException("PARSE_ERROR: unexpected token " + la);
+                default: throw new EvalException(formatError("unexpected token " + la.type, la.position, source));
             }
         }
+    }
+    
+    // Helper method to format error messages with position context
+    private static String formatError(String message, int position, String source) {
+        StringBuilder sb = new StringBuilder("PARSE_ERROR: ").append(message);
+        sb.append(" at position ").append(position);
+        
+        // Show context around the error position
+        int contextStart = Math.max(0, position - 30);
+        int contextEnd = Math.min(source.length(), position + 30);
+        String context = source.substring(contextStart, contextEnd);
+        int relativePos = position - contextStart;
+        
+        sb.append("\nContext: ").append(context);
+        sb.append("\n         ");
+        for (int i = 0; i < relativePos; i++) {
+            sb.append(" ");
+        }
+        sb.append("^");
+        
+        return sb.toString();
     }
 
     // =========================================================
