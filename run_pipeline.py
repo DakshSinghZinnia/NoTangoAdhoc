@@ -213,9 +213,44 @@ def main():
         print("ERROR: Step 9 failed - transferring input.json")
         return 1
     
-    # Step 10: Upload docx to Storage API
+    # Step 10: Run MergeBodyIntoFooter.java in docx_merging
     print("\n\n" + "#"*70)
-    print("# STEP 10: Uploading dest-with-header-footer.docx to Storage API")
+    print("# STEP 10: Running MergeBodyIntoFooter.java")
+    print("#"*70)
+    
+    docx_merging_folder = base_dir / "docx_merging"
+    
+    # Compile the project using Maven wrapper
+    if not run_command(
+        [str(mvnw), "compile", "-q", "-f", str(docx_merging_folder / "pom.xml")],
+        cwd=str(base_dir)  # Run from base_dir since Java uses "docx_merging/src/main/resources" path
+    ):
+        print("ERROR: Step 10 failed - Maven compile for docx_merging")
+        return 1
+    
+    # Run the main class (from base_dir since Java uses relative path "docx_merging/src/main/resources")
+    if not run_command(
+        [str(mvnw), "exec:java", "-Dexec.mainClass=org.example.MergeBodyIntoFooter", "-q", "-f", str(docx_merging_folder / "pom.xml")],
+        cwd=str(base_dir)
+    ):
+        print("ERROR: Step 10 failed - running MergeBodyIntoFooter")
+        return 1
+    
+    # Step 11: Copy dest-with-header-footer.docx to pdfgen testInput
+    print("\n\n" + "#"*70)
+    print("# STEP 11: Copying dest-with-header-footer.docx to pdfgen testInput")
+    print("#"*70)
+    
+    docx_source = docx_merging_folder / "src" / "main" / "resources" / "dest-with-header-footer.docx"
+    docx_dest = pdfgen_test_folder / "dest-with-header-footer.docx"
+    
+    if not copy_file(docx_source, docx_dest):
+        print("ERROR: Step 11 failed - copying dest-with-header-footer.docx")
+        return 1
+    
+    # Step 12: Upload docx to Storage API
+    print("\n\n" + "#"*70)
+    print("# STEP 12: Uploading dest-with-header-footer.docx to Storage API")
     print("#"*70)
     
     docx_file = pdfgen_test_folder / "dest-with-header-footer.docx"
@@ -228,12 +263,12 @@ def main():
             storage_api_url
         ]
     ):
-        print("ERROR: Step 10 failed - Storage API upload")
+        print("ERROR: Step 12 failed - Storage API upload")
         return 1
     
-    # Step 11: Call Docx-to-PDF API and save response
+    # Step 13: Call Docx-to-PDF API and save response
     print("\n\n" + "#"*70)
-    print("# STEP 11: Calling Docx-to-PDF API and saving PDF output")
+    print("# STEP 13: Calling Docx-to-PDF API and saving PDF output")
     print("#"*70)
     
     render_api_url = "https://platform.dev-capability.zinnia.com/pdfgeneration-service/docx/render-to-pdf?templateName=dest-with-header-footer.docx"
@@ -277,9 +312,9 @@ def main():
         print(f"ERROR: Failed to call Docx-to-PDF API: {e}")
         return 1
     
-    # Step 12: Stamp barcode image on each page of the PDF
+    # Step 14: Stamp barcode image on each page of the PDF
     print("\n\n" + "#"*70)
-    print("# STEP 12: Stamping barcode image on each page of the PDF")
+    print("# STEP 14: Stamping barcode image on each page of the PDF")
     print("#"*70)
     
     stamp_api_url = "https://platform.dev-capability.zinnia.com/pdfgeneration-service/pdf/stamp-image"
@@ -294,7 +329,7 @@ def main():
     print(f"PDF has {page_count} page(s)")
     
     # Stamp each page
-    for page in range(1, page_count + 1):
+    for page in range(1, page_count + 1, 2):
         print(f"\n{'='*60}")
         print(f"Stamping page {page} of {page_count}")
         print('='*60)
@@ -308,7 +343,7 @@ def main():
                     "curl", "-X", "POST",
                     "-F", f"pdf=@{output_pdf_file}",
                     "-F", f"image=@{barcode_image}",
-                    f"{stamp_api_url}?x=204&y=220.8&width=6.4&height=45.2&units=mm&anchor=top-left&page={page}",
+                    f"{stamp_api_url}?x=204&y=220.8&width=8.5&height=45.2&units=mm&anchor=top-left&page={page}",
                     "-o", str(temp_output)
                 ],
                 capture_output=True,

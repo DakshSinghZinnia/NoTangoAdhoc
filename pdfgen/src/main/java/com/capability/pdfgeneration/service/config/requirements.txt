@@ -1,0 +1,209 @@
+Login :
+- /login -> email, password
+
+Response :
+{
+    "status": 200,
+    "message": "User logged in successfully",
+    "user": {
+        "id": "string",
+        "email": "string",
+        "name": "string",
+        "roles": [ "string" ],
+        "createdAt": "string",
+        "updatedAt": "string"
+    },
+    "token": "string"
+}
+
+Clients:
+- /clients -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Clients fetched successfully",
+    "clients": [ { "id": "string", "name": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+Categories:
+- /categories -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Categories fetched successfully",
+    "categories": [ { "id": "string", "name": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+Subcategories:
+- /categories/{categoryId}/subcategories -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Subcategories fetched successfully",
+    "subcategories": [ { "id": "string", "name": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+Templates:
+- /categories/{categoryId}/subcategories/{subcategoryId}/templates -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Templates fetched successfully",
+    "templates": [ { "id": "string", "name": "string", "s3_url": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+Template :
+- /categories/{categoryId}/subcategories/{subcategoryId}/templates/{templateId} -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Template fetched successfully",
+    "template": { "id": "string", "name": "string", "s3_url": "string", "createdAt": "string", "updatedAt": "string" }
+}
+
+
+Templates:
+- /categories/{categoryId}/subcategories/{subcategoryId}/templates&clientId={clientId} -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Templates fetched successfully",
+    "templates": [ { "id": "string", "name": "string", "s3_url": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+
+/clients/{clientId}/images -> token
+
+Response :
+{
+    "status": 200,
+    "message": "Images fetched successfully",
+    "images": [ { "id": "string", "name": "string", "s3_url": "string", "createdAt": "string", "updatedAt": "string" } ]
+}
+
+------------------------------------------------------
+------------------------------------------------------
+
+-- Users table for authentication
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Should store hashed password
+    name VARCHAR(255) NOT NULL,
+    roles TEXT[] NOT NULL DEFAULT '{}', -- Array of roles
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- Clients table
+CREATE TABLE clients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Categories table
+CREATE TABLE categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Subcategories table
+CREATE TABLE subcategories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    category_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+-- Create index for faster subcategory lookup by category
+CREATE INDEX idx_subcategories_category_id ON subcategories(category_id);
+
+-- Templates table
+CREATE TABLE templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    subcategory_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    s3_url TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) ON DELETE CASCADE
+);
+
+-- Create index for faster template lookup by subcategory
+CREATE INDEX idx_templates_subcategory_id ON templates(subcategory_id);
+
+-- Optional: Client-Template relationship (if templates are client-specific)
+CREATE TABLE client_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL,
+    template_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE,
+    UNIQUE(client_id, template_id)
+);
+
+CREATE TABLE images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    s3_url TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE client_images (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id UUID NOT NULL,
+    image_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE,
+    UNIQUE(client_id, image_id)
+);
+
+------------------------------------------------------
+------------------------------------------------------ 
+
+
+POST   /register                          -> email, password, name, roles
+POST   /logout                            -> token
+POST   /login                            -> email, password
+GET    /users                             -> token (admin only)
+GET    /users/{userId}                    -> token
+PUT    /users/{userId}                    -> token, updated fields (admin only)
+DELETE /users/{userId}                    -> token (admin only)
+POST   /users/{userId}/change-password    -> token, old password, new password
+
+Admin only API's: 
+
+POST   /clients                           -> token, name
+PUT    /clients/{clientId}                -> token, name
+DELETE /clients/{clientId}                -> token
+GET    /clients/{clientId}                -> token
+
+POST   /categories                        -> token, name
+PUT    /categories/{categoryId}           -> token, name
+DELETE /categories/{categoryId}           -> token
+GET    /categories/{categoryId}           -> token
+
+POST   /categories/{categoryId}/subcategories              -> token, name
+PUT    /categories/{categoryId}/subcategories/{subcategoryId}    -> token, name
+DELETE /categories/{categoryId}/subcategories/{subcategoryId}    -> token
+GET    /categories/{categoryId}/subcategories/{subcategoryId}    -> token
+
+
+------------------------------------------------------
+------------------------------------------------------

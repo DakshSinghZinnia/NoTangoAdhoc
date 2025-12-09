@@ -1,0 +1,59 @@
+{
+    "variables": {
+        "name": {
+            "type": "str",
+            "displayName": "Owner Name",
+            "dropdown": false,
+            "required": true,
+            "defaultValue": "Daksh"
+        },
+		"role":{
+			"type": "str",
+            "displayName": "Role",
+            "dropdown": false,
+            "required": true,
+            "defaultValue": "Joint Owner"
+		},
+        "val": {
+            "type": "bool",
+            "displayName": "Boolean Variable",
+            "dropdown": false,
+            "required": true,
+            "defaultValue": false
+        }
+    },
+    "statements": [
+		{
+			"variable": "checkbox1",
+			"text": {
+				"text": "How is your health? {{name}}",
+				"variables": {
+					"name": {
+						"type": "str",
+						"displayName": "Name",
+						"dropdown": false,
+						"required": true,
+						"defaultValue": "Daksh"
+					}
+				}
+			},
+			"section": "Greetings"
+		},
+		{
+			"variable": "checkbox2",
+			"text": {
+				"text": "Sample. This is a dropdown variable {{variable1}} ",
+				"variables": {
+                  "variable1": {
+                    "type": "str",
+                    "displayName": "Variable 1",
+                    "dropdown": true,
+                    "required": true,
+                    "defaultValue": null
+                  }
+                }
+			},
+			"section": "Sample"
+		}
+    ]
+}

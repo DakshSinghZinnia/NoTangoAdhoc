@@ -1,0 +1,129 @@
+
+name: Deployment Jobs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Maven-build:
+    runs-on: ubuntu-latest
+    name: DockerBuild for Capability (dev)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ vars.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: maven-settings-temporary
+        uses: InstaCode/maven-settings-xml-action@v9
+        with:
+          servers: |
+            [
+            {"id": "camunda-bpm-nexus-ee", "username": "se2_1", "password": "${{ secrets.CAMUNDA_REPO_PASSWORD }}"},
+            {"id": "github", "username": "anshulzinnia" , "password": "${{ secrets.GIT_TOKEN }}"}
+            ]
+          repositories: '[{"id":"github","name":"github Maven Repository","url":"https://maven.pkg.github.com/zinnia/otp-bpm-parent","releases":{"enabled":true},"snapshots":{"enabled":true}},{"id":"camunda-bpm-nexus-ee","name":"Camunda Enterprise Maven Repository","url":"https://artifacts.camunda.com/artifactory/camunda-bpm-ee-auth","releases":{"enabled":true},"snapshots":{"enabled":true}},{"id":"jitpack.io","name":"JIT","url":"https://jitpack.io","releases":{"enabled":true},"snapshots":{"enabled":true}}]'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: mvn clean package -Premote -U
+
+      - name: Upload jar
+        run: mkdir -p staging && cp target/*.jar staging
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Package
+          path: staging
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.CAPABILITY_DEV_BUILD_ROLE_ARN }}
+          aws-region: ${{ vars.CAPABILITY_AWS_REGION }}
+
+      - name: Download Datadog Java Agent
+        run: |
+          curl -L -o dd-java-agent.jar https://github.com/DataDog/dd-trace-java/releases/download/v1.51.2/dd-java-agent.jar
+
+      - name: Build Docker image
+        run: |
+          REPO_NAME=${GITHUB_REPOSITORY#"zinnia/"}
+          IMAGE_TAG=$GITHUB_RUN_ID
+          docker buildx build --platform linux/arm64 \
+            -t ${{ vars.CAPABILITY_DEV_BUILD_ECR_URL }}/${REPO_NAME}:${IMAGE_TAG} --load .
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ vars.CAPABILITY_AWS_REGION }} \
+            | docker login --username AWS --password-stdin ${{ vars.CAPABILITY_DEV_BUILD_ECR_URL }}
+
+      - name: Push Docker Image to ECR
+        run: |
+          REPO_NAME=${GITHUB_REPOSITORY#"zinnia/"}
+          IMAGE_TAG=$GITHUB_RUN_ID
+          docker push ${{ vars.CAPABILITY_DEV_BUILD_ECR_URL }}/${REPO_NAME}:${IMAGE_TAG}
+
+      - name: Logout from Docker
+        run: docker logout
+  Dev-Update-helm-tag:
+    name: Bump Helm image.tag in devops repo (dev)
+    needs: Maven-build
+    runs-on: ubuntu-latest
+    environment: dev-capability
+    steps:
+      - name: Checkout devops repo
+        uses: actions/checkout@v4
+        with:
+          repository: zinnia/devops
+          ref: feature/capability
+          token: ${{ secrets.GIT_TOKEN }}
+
+      - name: Update image.tag
+        uses: mikefarah/yq@v4.44.3
+        env:
+          IMAGE_TAG: ${{ github.run_id }}
+        with:
+          cmd: yq -i '.image.tag = strenv(IMAGE_TAG)' ${{ vars.CAPABILITY_DEV_VALUES_FILE }}
+
+      - name: Update DD_VERSION to match tag
+        uses: mikefarah/yq@v4.44.3
+        env:
+          IMAGE_TAG: ${{ github.run_id }}
+        with:
+          cmd: yq -i '(.env[] | select(.name=="DD_VERSION") | .value) = strenv(IMAGE_TAG)' ${{ vars.CAPABILITY_DEV_VALUES_FILE }}
+
+      - name: Commit and push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(capability-pdfgeneration-service): bump DEV image.tag and DD_VERSION to ${{ github.run_id }}"
+          branch: feature/capability
+          file_pattern: ${{ vars.CAPABILITY_DEV_VALUES_FILE }}
+          commit_user_name: github-actions[bot]
+          commit_user_email: 41898282+github-actions[bot]@users.noreply.github.com
