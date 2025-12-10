@@ -410,11 +410,14 @@
     "People_Broker_Email" : "",
     "People_Payor_Email" : "",
     "Delivery_Email_Address" : "",
-    "People_PrimaryOwner_FullName" : "DTCI",
+    "People_PrimaryOwner_FullName" : "Dtci",
     "Everly_Company_Address" : "",
     "PremiumFrequency" : "",
     "CC_CorrelationId " : "",
-    "Owner_FullName" : "Dtci"
+    "Owner_FullName" : "Dtci",
+    "SecondaryAddressee_FullName" : "",
+    "People_Payor_FullName" : "",
+    "DocName_ClientID" : "Reg 60 Incoming Replacement Notice_PRDN"
   },
   "PlanCode_Lookup" : {
     "ProductType" : "VA",
