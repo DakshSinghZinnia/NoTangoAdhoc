@@ -1,0 +1,19 @@
+Rep Death Letter,Producer
+Rep Welcome Letter,Producer
+Rep Returned Mail,Producer
+Block Transfer Letter,Broker
+Appointment Termination,Producer
+Proprietary Commissions Letter,Producer
+Denial Licenses or Appointment Letter,Producer
+NIGO Appointment Letter,Producer
+NIGO Rep Change Letter,Producer
+General Service Form Letter,Owner
+60 Day Delivery Acknowledgement,Producer
+SB New District Correspondence Letter,Owner
+Misdirected Mail - Forward to Proper Recipient,Owner
+Policy Not Found,Owner
+Reg 60 Incoming Comparison Letter,Owner
+Reg 60 Incoming Good Faith Approximation Letter,Owner
+Reg 60 Incoming Replacement Notice,Owner
+Suitability-Rep Letter-Missing Training,Owner
+Incorrect Application Received Letter,Owner

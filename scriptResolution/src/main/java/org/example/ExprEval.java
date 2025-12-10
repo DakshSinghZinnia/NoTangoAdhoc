@@ -126,6 +126,8 @@ public class ExprEval {
         List<Map.Entry<String, String>> node0 = new ArrayList<>();
         node0.add(entry("LetterData/CC_CorrelationId ",""));
         // === Node 1: Basic transformations ===
+
+        // node1---BR_1
         List<Map.Entry<String, String>> node1 = new ArrayList<>();
         node1.add(entry("PlanCode_Lookup/ProductType", "Lookup(LetterData/PlanCode, 'PlanCode_Lookup', 27, \"\")"));
         node1.add(entry("LetterData/People_Annuitant_FullName", "Concat(LetterData/People_Annuitant_FirstName,' ',LetterData/People_Annuitant_LastName)"));
@@ -160,9 +162,18 @@ public class ExprEval {
         node1.add(entry("WebIndex/ClientID","SubString(Concat(LetterData/ClientId,'               '),1,15)"));
         node1.add(entry("WebIndex/ExternalClientID","'000000000000000'"));
         node1.add(entry("LetterData/DocInfo/InputFileName","'demo'"));
+        node1.add(entry("LetterData/SecondaryAddressee_FullName", "Trim(TitleCase(Concat(LetterData/SecondaryAddressee_FirstName,' ',LetterData/SecondaryAddressee_LastName)))"));
+        node1.add(entry("LetterData/People_Payor_FullName", "Trim(TitleCase(Concat(LetterData/People_Payor_FirstName,' ',LetterData/People_Payor_LastName)))"));
+        node1.add(entry("LetterData/People_PrimaryOwner_FullName", "Trim(TitleCase(Concat(LetterData/People_PrimaryOwner_FirstName,' ',LetterData/People_PrimaryOwner_LastName)))"));
+        node1.add(entry("LetterData/MailIndicator", "UpperCase(LetterData/MailIndicator)"));
+        node1.add(entry("LetterData/DocName_ClientID", "Concat(LetterData/DocInfo/DocName +'_'+ LetterData/ClientId)"));
+
+
+
 
 
         // === Node 2: Address transformations with multiple scripts on same variable ===
+        // node2---BR_3
         List<Map.Entry<String, String>> node2 = new ArrayList<>();
         node2.add(entry("PlanCode_Lookup/Client_Abbr", "Lookup(LetterData/PlanCode, 'PlanCode_Lookup', 36, \"\")"));
         // Multiple scripts on PlanCode_Lookup/Address - each uses the result from the previous
@@ -179,7 +190,13 @@ public class ExprEval {
           ));
 
         node2.add(entry("LetterData/AddressBlock/Free_Form", "UpperCase(LetterData/AddressBlock/Free_Form)"));
+
         
+        // BR_2, BR_Pkg, BR_4, BR_ENV, BR_ONeil nodes are being created
+        List<Map.Entry<String, String>> BR_2 = new ArrayList<>();
+        BR_2.add(entry("LetterData/PayorCopyFlag", ""));
+        BR_2.add(entry("LetterData/AddressBlock/ConsigneeFullName", "if(LetterData/People_PrimaryOwner_FullName == '', 'False', if(LetterData/People_PrimaryOwner_FullName == LetterData/People_Payor_FullName, 'False',if(LetterData/People_Payor_FullName == '', 'False', 'True')))"));
+        BR_2.add(entry("Global_Rules/ProducerCopyType", "Lookup(LetterData/DocInfo/DocName, 'ProducerCopy', 2, \"\")"));
         List<Map.Entry<String, String>> node3 = new ArrayList<>();
         //node3.add(entry("LetterData/GR_Slife", ""));
         node3.add(entry("LetterData/GR3", ""));
@@ -210,6 +227,7 @@ public class ExprEval {
 
         nodes.add(node0);
         nodes.add(node1);
+        nodes.add(BR_2);
         nodes.add(node2);
         nodes.add(node3);
         nodes.add(node4);
@@ -1093,6 +1111,32 @@ public class ExprEval {
             r.register("Abs", (ctx,a)->{ ensureArity("Abs",a,1); return new NumVal(Coerce.toBigDecimal(a.get(0)).abs()); });
             r.register("Floor", (ctx,a)->{ ensureArity("Floor",a,1); return new NumVal(Coerce.toBigDecimal(a.get(0)).setScale(0, RoundingMode.FLOOR)); });
             r.register("Ceil", (ctx,a)->{ ensureArity("Ceil",a,1); return new NumVal(Coerce.toBigDecimal(a.get(0)).setScale(0, RoundingMode.CEILING)); });
+
+            // ToInt(Input) - Converts input to integer. For bool: false -> 0, true -> 1
+            r.register("ToInt", (ctx,a)->{
+                ensureArity("ToInt",a,1);
+                Value v = a.get(0);
+                if (v instanceof BoolVal) {
+                    return new NumVal(((BoolVal) v).v ? BigDecimal.ONE : BigDecimal.ZERO);
+                }
+                // For numeric and string values, convert to BigDecimal and truncate to integer
+                BigDecimal bd = Coerce.toBigDecimal(v);
+                return new NumVal(bd.setScale(0, RoundingMode.DOWN));
+            });
+
+            // LessThan(Input1, Input2) - Returns true if first input is less than second
+            r.register("LessThan", (ctx,a)->{
+                ensureArity("LessThan",a,2);
+                Value lv = a.get(0), rv = a.get(1);
+                int cmp;
+                if (Coerce.isNumeric(lv) && Coerce.isNumeric(rv)) {
+                    cmp = Coerce.toBigDecimal(lv).compareTo(Coerce.toBigDecimal(rv));
+                } else {
+                    // Compare as strings
+                    cmp = Coerce.toString(lv).compareTo(Coerce.toString(rv));
+                }
+                return new BoolVal(cmp < 0);
+            });
 
             // Round(Input[, Precision]); if Precision not provided -> return number as-is
             r.register("Round", (ctx,a)->{

@@ -1,0 +1,195 @@
+DocName_ClientID,ReplyEnv_Flag
+60 Day Delivery Acknowledgement_FLIC,Y
+Annuitization Letter_FLIC,Y
+Death Initial Notification Non Life_FLIC,Y
+NIGO Beneficiary Change Letter - Global Atlantic_FLIC,Y
+NIGO Death Initial Notification Letter - Global Atlantic_FLIC,Y
+NIGO Outgoing Transfer Letter - Global Atlantic_FLIC,Y
+NIGO Redemption Letter - Global Atlantic_FLIC,Y
+NIGO Role Change Letter - Global Atlantic_FLIC,Y
+W-9 Certification Letter_FLIC,Y
+Annuitization Letter_GDMN,Y
+Death Initial Notification_GDMN,Y
+Death Initial Notification Non Life_GDMN,Y
+Insufficient Funds and Lapse Letter_GDMN,Y
+NIGO Beneficiary Change Letter - Global Atlantic_GDMN,Y
+NIGO Death Initial Notification Letter - Global Atlantic_GDMN,Y
+NIGO Outgoing Transfer Letter - Global Atlantic_GDMN,Y
+NIGO Redemption Letter - Global Atlantic_GDMN,Y
+NIGO Role Change Letter - Global Atlantic_GDMN,Y
+Overpayment Letter_GDMN,Y
+Plan Payment Agreement Letter_GDMN,Y
+Pre Lapse Notice_GDMN,Y
+Reinstatement Approval Quote_GDMN,Y
+Reinstatement Letter Life_GDMN,Y
+Rep Death Letter_GDMN,Y
+W-9 Certification Letter_GDMN,Y
+Welcome Letter for Payment Plan_GDMN,Y
+Additional Trust Requirements_ALLM,Y
+Billing Statement_ALLM,Y
+Death Initial Notification_ALLM,Y
+Dividend Option for Premium Payment and Loans_ALLM,Y
+Hanover CPU Letter_ALLM,Y
+Maturity Settlement Option Letter_ALLM,Y
+NIGO Beneficiary Change Letter_ALLM,Y
+NIGO Death Initial Notification Letter_ALLM,Y
+NIGO Outgoing Transfer Letter_ALLM,Y
+NIGO Redemption Letter_ALLM,Y
+NIGO Role Change Letter_ALLM,Y
+W-9 Certification Letter_ALLM,Y
+Waiver Letter_ALLM,Y
+60 Day Delivery Acknowledgement_SBGC,Y
+Annuitization Letter_SBGC,Y
+Death Initial Notification_SBGC,Y
+Death Initial Notification Non Life_SBGC,Y
+NIGO Beneficiary Change Letter_SBGC,Y
+NIGO Death Initial Notification Letter_SBGC,Y
+NIGO Exchange Letter_SBGC,Y
+NIGO Outgoing Transfer Letter_SBGC,Y
+NIGO Redemption Letter_SBGC,Y
+NIGO Role Change Letter_SBGC,Y
+Rep Death Letter_SBGC,Y
+W-9 Certification Letter_SBGC,Y
+60 Day Delivery Acknowledgement_MASS ,Y
+Additional Trust Requirements_MASS ,Y
+Annuitization Letter_MASS,Y
+Death Initial Notification_MASS,Y
+Death Initial Notification Non Life_MASS ,Y
+Final Notice for Certification_MASS ,Y
+Insufficient Funds and Lapse Letter_MASS,Y
+NIGO Beneficiary Change Letter_MASS,Y
+NIGO Death Initial Notification Letter_MASS,Y
+NIGO Outgoing Transfer Letter_MASS,Y
+NIGO Redemption Letter_MASS,Y
+NIGO Role Change Letter_MASS,Y
+Pre Lapse Notice_MASS ,Y
+Reinstatement Approval Quote_MASS ,Y
+Reinstatement Letter Life_MASS ,Y
+Rep Death Letter_MASS,Y
+W-9 Certification Letter_MASS,Y
+60 Day Delivery Acknowledgement_EMRS,Y
+Additional Trust Requirements_EMRS,Y
+Annuitization Letter_EMRS,Y
+Death Initial Notification_EMRS,Y
+Death Initial Notification Non Life_EMRS,Y
+Final Notice for Certification_EMRS,Y
+Insufficient Funds and Lapse Letter_EMRS,Y
+NIGO Beneficiary Change Letter_EMRS,Y
+NIGO Death Initial Notification Letter_EMRS,Y
+NIGO Outgoing Transfer Letter_EMRS,Y
+NIGO Redemption Letter_EMRS,Y
+NIGO Role Change Letter_EMRS,Y
+Pre Lapse Notice_EMRS,Y
+Reinstatement Approval Quote_EMRS,Y
+Reinstatement Letter Life_EMRS,Y
+Rep Death Letter_EMRS,Y
+W-9 Certification Letter_EMRS,Y
+Annuitization Letter_DLIC,Y
+Death Initial Notification_DLIC,Y
+Death Initial Notification Letter Non Life_DLIC,Y
+Insufficient Funds and Lapse Letter_DLIC,Y
+Maturity Initial Whole Life Letter_DLIC,Y
+NIGO Annuitization Letter_DLIC,Y
+NIGO Beneficiary Change Letter_DLIC,Y
+NIGO Death Initial Notification Letter_DLIC,Y
+NIGO Outgoing Transfer Letter_DLIC,Y
+NIGO Redemption Letter_DLIC,Y
+NIGO Role Change Letter_DLIC,Y
+W-9 Certification Letter_DLIC,Y
+60 Day Delivery Acknowledgement_SFGI,Y
+Annuitization Letter_SFGI,Y
+Death Initial Notification Non Life_SFGI,Y
+NIGO Beneficiary Change Letter_SFGI,Y
+NIGO Death Initial Notification Letter_SFGI,Y
+NIGO Outgoing Transfer Letter_SFGI,Y
+NIGO Redemption Letter_SFGI,Y
+NIGO Role Change Letter_SFGI,Y
+Sammon VA W-9 Letter_SFGI,Y
+W-9 Certification Letter_SFGI,Y
+Death Initial Notification_RSLN,Y
+Death Initial Notification Non Life_RSLN,Y
+NIGO Beneficiary Change Letter_RSLN,Y
+NIGO Death Initial Notification Letter_RSLN,Y
+NIGO Outgoing Transfer Letter_RSLN,Y
+NIGO Redemption Letter_RSLN,Y
+NIGO Role Change Letter_RSLN,Y
+Rep Death Letter_RSLN,Y
+W-9 Certification Letter_RSLN,Y
+60 Day Delivery Acknowledgement_PRDN,Y
+Annuitization Letter_PRDN,Y
+Death Initial Notification Non Life_PRDN,Y
+NIGO Beneficiary Change Letter_PRDN,Y
+NIGO Death Initial Notification Letter_PRDN,Y
+NIGO Outgoing Transfer Letter_PRDN,Y
+NIGO Redemption Letter_PRDN,Y
+NIGO Role Change Letter_PRDN,Y
+W-9 Certification Letter_PRDN,Y
+60 Day Delivery Acknowledgement_PRUD,Y
+Annuitization Letter_PRUD,Y
+Death Initial Notification Non Life_PRUD,Y
+NIGO Beneficiary Change Letter_PRUD,Y
+NIGO Death Initial Notification Letter_PRUD,Y
+NIGO Outgoing Transfer Letter_PRUD,Y
+NIGO Redemption Letter_PRUD,Y
+NIGO Role Change Letter_PRUD,Y
+W-9 Certification Letter_PRUD,Y
+60 Day Delivery Acknowledgement_PICA,Y
+Annuitization Letter_PICA,Y
+Death Initial Notification Non Life_PICA,Y
+NIGO Beneficiary Change Letter_PICA,Y
+NIGO Death Initial Notification Letter_PICA,Y
+NIGO Outgoing Transfer Letter_PICA,Y
+NIGO Redemption Letter_PICA,Y
+NIGO Role Change Letter_PICA,Y
+W-9 Certification Letter_PICA,Y
+Annuitization Letter_USAA,Y
+Critical Care Withdrawal Cover Letter_USAA,Y
+Death Initial Notification Non Life_USAA,Y
+NIGO Beneficiary Change Letter_USAA,Y
+NIGO Death Initial Notification Letter_USAA,Y
+NIGO Outgoing Transfer Letter_USAA,Y
+NIGO Redemption Letter_USAA,Y
+NIGO Role Change Letter_USAA,Y
+Nursing Home Waiver_USAA,Y
+USAA Death Initial Notification Letter_USAA,Y
+USAA FELR Complete Form to Request Emergency Withdrawal of Funds_USAA,Y
+W-9 Certification Letter_USAA,Y
+Death Initial Notification_JH,Y
+Insufficient Funds and Lapse Letter_JH,Y
+NIGO Beneficiary Change Letter_JH,Y
+NIGO Death Initial Notification Letter_JH,Y
+NIGO Outgoing Transfer Letter_JH,Y
+NIGO Redemption Letter_JH,Y
+NIGO Role Change Letter_JH,Y
+Reinstatement Letter Life_JH,Y
+W-9 Certification Letter_JH,Y
+Death Initial Notification Non Life_GLCO,Y
+NIGO Beneficiary Change Letter_GLCO,Y
+NIGO Death Initial Notification Letter_GLCO,Y
+NIGO Outgoing Transfer Letter_GLCO,Y
+NIGO Redemption Letter_GLCO,Y
+NIGO Role Change Letter_GLCO,Y
+W-9 Certification Letter_GLCO,Y
+Are You Living Letter-NASSAU_NASU,Y_NM
+Convert Term Policy Letter_NASU,Y
+Death Initial Notification Letter - NASSAU_NASU,Y_NM
+Deceased Owner Confirmation Letter_NASU,Y_NM
+Deceased Owner Letter_NASU,Y
+Divorce Initial Request Letter_NASU,Y_NM
+EFT Draft Letter_NASU,Y_NM
+EFT Form Request Letter_NASU,Y_NM
+Escheatment Letter - NASSAU_NASU,Y_NM
+FATCA Mailing - NASSAU_NASU,Y_NM
+General Service Form Letter - NASSAU_NASU,Y_NM
+Hold Harmless Letter -NASSAU_NASU,Y
+NASSAU Annuitization Letter_NASU,Y_NM
+NASSAU Attempt to Locate Letter_NASU,Y_NM
+NASSAU Cash Patriot Act_NASU,Y
+NASSAU NIGO Bank Information Letter_NASU,Y_NM
+NASSAU W-9 Certification Letter_NASU,Y_NM
+NIGO Death Initial Notification Letter-NASSAU_NASU,Y_NM
+NIGO Prevent Lapse_NASU,Y
+Reduction Quote Letter_NASU,Y_NM
+Refund Payment Letter_NASU,Y
+Return Check Letter_NASU,Y
+Verification of Life - NASSAU_NASU,Y_NM
