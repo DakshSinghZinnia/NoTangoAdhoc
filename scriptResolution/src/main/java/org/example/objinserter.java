@@ -1,5 +1,7 @@
 package org.example;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.org.okapibarcode.backend.Code3Of9;
 import uk.org.okapibarcode.backend.HumanReadableLocation;
 import uk.org.okapibarcode.graphics.Color;
@@ -9,17 +11,45 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 import javax.imageio.ImageIO;
 
-public class objinserter {
+public class ObjInserter {
     public static void main(String[] args) throws Exception {
+        // Read barcode value from output.json
+        ObjectMapper mapper = new ObjectMapper();
+        String barcodeValue;
+        
+        // Try classpath first, then filesystem
+        InputStream in = ObjInserter.class.getResourceAsStream("/output/output.json");
+        if (in != null) {
+            JsonNode root = mapper.readTree(in);
+            barcodeValue = root.path("Barcode").path("value").asText();
+            in.close();
+        } else {
+            // Try filesystem path
+            File jsonFile = new File("src/main/resources/output/output.json");
+            JsonNode root = mapper.readTree(jsonFile);
+            barcodeValue = root.path("Barcode").path("value").asText();
+        }
+        
+        // Remove leading and trailing asterisks (Code 3 of 9 adds them automatically)
+        if (barcodeValue.startsWith("*")) {
+            barcodeValue = barcodeValue.substring(1);
+        }
+        if (barcodeValue.endsWith("*")) {
+            barcodeValue = barcodeValue.substring(0, barcodeValue.length() - 1);
+        }
+        
+        System.out.println("Barcode value from JSON: " + barcodeValue);
+        
         Code3Of9 barcode = new Code3Of9();
         barcode.setFontName("Monospaced");
         barcode.setFontSize(16);
         barcode.setModuleWidth(2);
         barcode.setBarHeight(50);
         barcode.setHumanReadableLocation(HumanReadableLocation.NONE);
-        barcode.setContent("1001000");
+        barcode.setContent(barcodeValue);
 
         int width = barcode.getWidth();
         int height = barcode.getHeight();
@@ -41,6 +71,7 @@ public class objinserter {
         g2dRotated.drawImage(image, 0, 0, null);
         g2dRotated.dispose();
 
-        ImageIO.write(rotatedImage, "png", new File("code3of9_2.png"));
+        ImageIO.write(rotatedImage, "jpg", new File("code3of9.jpg"));
+        //System.out.println("Barcode image saved to code3of9_2.png");
     }
 }
