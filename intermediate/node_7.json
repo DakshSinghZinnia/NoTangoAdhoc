@@ -436,8 +436,7 @@
     "PhoneNumber" : "1-800-457-7617",
     "Address" : "Everlake Life Insurance Company\r\nP.O. Box 758598\r\nTopeka KS 66675-8598",
     "ServiceCenter" : "Client Services",
-    "Client_Abbr" : "PRU",
-    "ENV_BAR" : "1"
+    "Client_Abbr" : "PRU"
   },
   "WebIndex" : {
     "Header" : "WebED:",
@@ -464,22 +463,5 @@
   },
   "Global_Rules" : {
     "ProducerCopyType" : "Owner"
-  },
-  "Document" : {
-    "System" : {
-      "SheetNo" : "1",
-      "SheetCount" : "1",
-      "PageNo" : "1"
-    }
-  },
-  "Packaging" : {
-    "BannerFlag" : "",
-    "Mailing_Flag" : ""
-  },
-  "DocInfo" : {
-    "DocCount" : "1"
-  },
-  "Barcode" : {
-    "value" : "*1001000*"
   }
 }

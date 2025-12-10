@@ -188,17 +188,18 @@ def main():
         print("ERROR: Step 7 failed - running ExprEval")
         return 1
     
-    # Step 8: Rename output.json to input.json in scriptResolution/src/main/resources/output
+    # Step 8: Copy output.json to input.json in scriptResolution/src/main/resources/output
+    # (Keep output.json for ObjInserter which needs it later)
     print("\n\n" + "#"*70)
-    print("# STEP 8: Renaming output.json to input.json in scriptResolution resources/output")
+    print("# STEP 8: Copying output.json to input.json in scriptResolution resources/output")
     print("#"*70)
     
     script_resolution_output = script_resolution_folder / "src" / "main" / "resources" / "output"
     script_resolution_output_file = script_resolution_output / "output.json"
     script_resolution_renamed_file = script_resolution_output / "input.json"
     
-    if not rename_file(script_resolution_output_file, script_resolution_renamed_file):
-        print("ERROR: Step 8 failed - renaming output.json")
+    if not copy_file(script_resolution_output_file, script_resolution_renamed_file):
+        print("ERROR: Step 8 failed - copying output.json to input.json")
         return 1
     
     # Step 9: Transfer input.json to pdfgen/src/main/resources/test
@@ -312,13 +313,35 @@ def main():
         print(f"ERROR: Failed to call Docx-to-PDF API: {e}")
         return 1
     
-    # Step 14: Stamp barcode image on each page of the PDF
+    # Step 14: Run ObjInserter to generate barcode image
     print("\n\n" + "#"*70)
-    print("# STEP 14: Stamping barcode image on each page of the PDF")
+    print("# STEP 14: Running ObjInserter.java to generate barcode image")
     print("#"*70)
+
+    # Run ObjInserter to generate barcode image from output.json
+    # (runs from base_dir since Java uses relative path "scriptResolution/src/main/resources")
+    # Uses the named execution 'run-objinserter' defined in pom.xml
+    if not run_command(
+        [str(mvnw), "exec:java@run-objinserter", "-f", str(script_resolution_folder / "pom.xml")],
+        cwd=str(base_dir)
+    ):
+        print("ERROR: Step 14 failed - running ObjInserter")
+        return 1
+
+    barcode_image = script_resolution_folder / "src" / "main" / "resources" / "objectInserter" / "sample_barcode.jpg"
     
+    # Verify barcode image was created
+    if not barcode_image.exists():
+        print(f"ERROR: Barcode image not created at {barcode_image}")
+        return 1
+    print(f"Barcode image created: {barcode_image}")
+
+    # Step 15: Stamp barcode image on each page of the PDF
+    print("\n\n" + "#"*70)
+    print("# STEP 15: Stamping barcode image on each page of the PDF")
+    print("#"*70)
+
     stamp_api_url = "https://platform.dev-capability.zinnia.com/pdfgeneration-service/pdf/stamp-image"
-    barcode_image = pdfgen_test_folder / "sample_barcode.jpg"
     
     # Get the number of pages in the PDF
     page_count = get_pdf_page_count(output_pdf_file)
@@ -335,7 +358,7 @@ def main():
         print('='*60)
         
         # Create a temporary file for the output
-        temp_output = test_output_folder / "output_temp.pdf"
+        temp_output = script_resolution_folder / "src" / "main" / "resources" / "objectInserter" / "output_temp.pdf"
         
         try:
             result = subprocess.run(

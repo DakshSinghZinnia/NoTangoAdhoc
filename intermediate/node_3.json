@@ -420,13 +420,8 @@
     "DocName_ClientID" : "Reg 60 Incoming Replacement Notice_PRDN",
     "PayorCopyFlag" : "",
     "AddressBlock" : {
-      "ConsigneeFullName" : "False",
-      "Free_Form" : "BRAD YOUNG\r\nMEAN STREET\r\nSTREET 2\r\nALBANY NY 12204"
-    },
-    "GR3" : "",
-    "BR43" : "",
-    "Recipient_Addblock" : "BRAD YOUNG\r\nMEAN STREET\r\nSTREET 2\r\nALBANY NY 12204",
-    "GR_Slife" : "contract"
+      "ConsigneeFullName" : "False"
+    }
   },
   "PlanCode_Lookup" : {
     "ProductType" : "VA",
@@ -434,10 +429,8 @@
     "Company_Text" : "Everlake Life Insurance Company",
     "FaxNumber" : "785-228-4584",
     "PhoneNumber" : "1-800-457-7617",
-    "Address" : "Everlake Life Insurance Company\r\nP.O. Box 758598\r\nTopeka KS 66675-8598",
-    "ServiceCenter" : "Client Services",
-    "Client_Abbr" : "PRU",
-    "ENV_BAR" : "1"
+    "Address" : "Everlake Life Insurance CompanyENDLINEP.O. Box 758598ENDLINETopeka KS 66675-8598",
+    "ServiceCenter" : "Client Services"
   },
   "WebIndex" : {
     "Header" : "WebED:",
@@ -457,29 +450,9 @@
     "RMAN" : "               ",
     "BMAN" : "               ",
     "ClientID" : "PRDN           ",
-    "ExternalClientID" : "000000000000000",
-    "SourceFileName" : "demo.pdf",
-    "WebIndex_Part1" : "WebED:12102025LC          ADHOC 381034                                  000000000P00000000433",
-    "WebIndex_Part2" : "OWNER 0000000000                                          PRDN           000000000000000demo.pdf"
+    "ExternalClientID" : "000000000000000"
   },
   "Global_Rules" : {
     "ProducerCopyType" : "Owner"
-  },
-  "Document" : {
-    "System" : {
-      "SheetNo" : "1",
-      "SheetCount" : "1",
-      "PageNo" : "1"
-    }
-  },
-  "Packaging" : {
-    "BannerFlag" : "",
-    "Mailing_Flag" : ""
-  },
-  "DocInfo" : {
-    "DocCount" : "1"
-  },
-  "Barcode" : {
-    "value" : "*1001000*"
   }
 }

@@ -36,6 +36,17 @@
                 <configuration>
                     <mainClass>org.example.ExprEval</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>run-objinserter</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.example.ObjInserter</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

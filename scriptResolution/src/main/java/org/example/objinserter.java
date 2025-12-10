@@ -27,8 +27,8 @@ public class ObjInserter {
             barcodeValue = root.path("Barcode").path("value").asText();
             in.close();
         } else {
-            // Try filesystem path
-            File jsonFile = new File("src/main/resources/output/output.json");
+            // Try filesystem path (run from base_dir, so include scriptResolution prefix)
+            File jsonFile = new File("scriptResolution/src/main/resources/output/output.json");
             JsonNode root = mapper.readTree(jsonFile);
             barcodeValue = root.path("Barcode").path("value").asText();
         }
@@ -71,7 +71,6 @@ public class ObjInserter {
         g2dRotated.drawImage(image, 0, 0, null);
         g2dRotated.dispose();
 
-        ImageIO.write(rotatedImage, "jpg", new File("code3of9.jpg"));
-        //System.out.println("Barcode image saved to code3of9_2.png");
+        ImageIO.write(rotatedImage, "jpg", new File("scriptResolution/src/main/resources/objectInserter/sample_barcode.jpg"));
     }
 }
