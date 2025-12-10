@@ -366,7 +366,7 @@ def main():
                     "curl", "-X", "POST",
                     "-F", f"pdf=@{output_pdf_file}",
                     "-F", f"image=@{barcode_image}",
-                    f"{stamp_api_url}?x=204&y=220.8&width=8.5&height=45.2&units=mm&anchor=top-left&page={page}",
+                    f"{stamp_api_url}?x=204&y=220.8&width=6.4&height=45.2&units=mm&anchor=top-left&page={page}",
                     "-o", str(temp_output)
                 ],
                 capture_output=True,
