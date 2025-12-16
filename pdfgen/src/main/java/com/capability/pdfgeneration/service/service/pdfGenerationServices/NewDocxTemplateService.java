@@ -12,9 +12,14 @@ import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.jodconverter.core.DocumentConverter;
 import org.jodconverter.core.document.DefaultDocumentFormatRegistry;
+import org.jodconverter.core.document.DocumentFormat;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
@@ -26,6 +31,45 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ * ============================================================================
+ * DOCX TEMPLATE SERVICE - Main PDF Generation Service
+ * ============================================================================
+ * 
+ * WHAT THIS SERVICE DOES:
+ * -----------------------
+ * This is the main service that:
+ *   1. Takes a DOCX template
+ *   2. Fills in variables with JSON data (using poi-tl library)
+ *   3. Converts the filled DOCX to PDF (using LibreOffice via JODConverter)
+ *   4. Optionally flattens transparency for PDF 1.3 compatibility
+ * 
+ * THE COMPLETE FLOW:
+ * ------------------
+ * 
+ *   DOCX Template + JSON Data
+ *           ↓
+ *   [poi-tl] Fill variables ({{name}}, {{address}}, etc.)
+ *           ↓
+ *   Rendered DOCX (with data filled in)
+ *           ↓
+ *   [JODConverter + LibreOffice] Convert to PDF
+ *           ↓
+ *   PDF (may have transparency, version 1.4+)
+ *           ↓
+ *   [TransparencyFlatteningService] Flatten (if enabled)
+ *           ↓
+ *   [PdfVersionService] Set version to 1.3
+ *           ↓
+ *   Final PDF 1.3 (no transparency)
+ * 
+ * CONFIGURATION OPTIONS (in application.properties):
+ * --------------------------------------------------
+ *   pdf.flatten.enabled=true        # Enable transparency flattening
+ *   pdf.flatten.method=RASTERIZE    # RASTERIZE or GHOSTSCRIPT
+ *   pdf.flatten.dpi=300             # DPI for rasterization (72-600)
+ */
+@Slf4j
 @Service
 public class NewDocxTemplateService {
 
@@ -37,10 +81,70 @@ public class NewDocxTemplateService {
             .useSpringEL()   // complex/nested conditions
             .build();
 
+    // ========================================================================
+    // INJECTED DEPENDENCIES (Spring provides these automatically)
+    // ========================================================================
+    
+    /** JODConverter's document converter (uses LibreOffice) */
     private final DocumentConverter converter;
+    
+    /** Custom PDF format with our export settings (from PdfFormatConfig) */
+    private final DocumentFormat customPdfFormat;
+    
+    /** Service to change PDF version */
+    private final PdfVersionService pdfVersionService;
+    
+    /** Service to flatten transparency by rasterization */
+    private final TransparencyFlatteningService transparencyFlatteningService;
 
-    public NewDocxTemplateService(ObjectProvider<DocumentConverter> converterProvider) {
+    // ========================================================================
+    // CONFIGURATION (from application.properties)
+    // ========================================================================
+    
+    /**
+     * Whether to flatten transparency in the output PDF.
+     * Set in application.properties: pdf.flatten.enabled=true
+     */
+    @Value("${pdf.flatten.enabled:true}")
+    private boolean flattenEnabled;
+    
+    /**
+     * Which method to use for flattening:
+     *   - RASTERIZE: Convert each page to an image (pure Java, no external tools)
+     *   - GHOSTSCRIPT: Use Ghostscript (better quality, requires gs installed)
+     * Set in application.properties: pdf.flatten.method=RASTERIZE
+     */
+    @Value("${pdf.flatten.method:RASTERIZE}")
+    private String flattenMethod;
+    
+    /**
+     * DPI for rasterization (only used when method=RASTERIZE).
+     *   72 = screen quality (fast, small files)
+     *   150 = web quality
+     *   300 = print quality (recommended)
+     *   600 = high-quality print (slow, large files)
+     * Set in application.properties: pdf.flatten.dpi=300
+     */
+    @Value("${pdf.flatten.dpi:300}")
+    private float flattenDpi;
+
+    // ========================================================================
+    // CONSTRUCTOR (Spring calls this automatically with dependencies)
+    // ========================================================================
+    
+    public NewDocxTemplateService(
+            ObjectProvider<DocumentConverter> converterProvider,
+            @Autowired(required = false) @Qualifier("pdfVersion14Format") DocumentFormat customPdfFormat,
+            PdfVersionService pdfVersionService,
+            TransparencyFlatteningService transparencyFlatteningService) {
         this.converter = converterProvider.getIfAvailable(); // null when office.enabled=false
+        this.customPdfFormat = customPdfFormat;
+        this.pdfVersionService = pdfVersionService;
+        this.transparencyFlatteningService = transparencyFlatteningService;
+        
+        log.info("NewDocxTemplateService initialized");
+        log.info("  - LibreOffice converter: {}", converter != null ? "available" : "NOT AVAILABLE");
+        log.info("  - Custom PDF format: {}", customPdfFormat != null ? "configured" : "using defaults");
     }
 
     public RenderResult renderDocxAndPdf(byte[] templateDocx, @Nullable String json, List<byte[]> imageBytes) throws Exception {
@@ -276,19 +380,102 @@ public class NewDocxTemplateService {
         }
     }
 
+    /**
+     * Converts DOCX to PDF with transparency flattening for PDF 1.3 compatibility.
+     * 
+     * THE CONVERSION PIPELINE:
+     * ========================
+     * 
+     * STEP 1: LibreOffice Conversion
+     * ------------------------------
+     * JODConverter sends the DOCX to LibreOffice, which converts it to PDF.
+     * At this stage, the PDF may be version 1.4-1.7 and may contain transparency.
+     * 
+     * STEP 2: Transparency Flattening (if enabled)
+     * ---------------------------------------------
+     * If pdf.flatten.enabled=true, we flatten the PDF:
+     * 
+     *   Method RASTERIZE:
+     *   - Each page is rendered to a JPEG image (no alpha channel = no transparency)
+     *   - A new PDF is created with these images as pages
+     *   - Text becomes non-searchable (it's now an image)
+     * 
+     *   Method GHOSTSCRIPT:
+     *   - Ghostscript processes the PDF with -dCompatibilityLevel=1.3
+     *   - Transparency is flattened while keeping text as text
+     *   - Requires Ghostscript to be installed on the system
+     * 
+     * STEP 3: Version Downgrade
+     * -------------------------
+     * The PDF version header is set to 1.3.
+     * If flattening was done, this is just a formality (already 1.3 compatible).
+     * If flattening was skipped, this changes the header but transparency may remain.
+     * 
+     * @param docxBytes The DOCX document bytes
+     * @return PDF 1.3 bytes (with or without flattening based on config)
+     */
     private byte[] convertDocxToPdf(byte[] docxBytes) throws Exception {
         try (var in = new ByteArrayInputStream(docxBytes);
              var out = new ByteArrayOutputStream()) {
 
+            // ================================================================
+            // STEP 1: Convert DOCX to PDF using LibreOffice
+            // ================================================================
+            log.info("Step 1: Converting DOCX to PDF via LibreOffice...");
+            
+            // Use custom PDF format if available (PDF/A-1b settings), else use default
+            DocumentFormat targetFormat = (customPdfFormat != null) 
+                    ? customPdfFormat 
+                    : DefaultDocumentFormatRegistry.PDF;
+
             converter.convert(in)
                     .as(DefaultDocumentFormatRegistry.DOCX)
                     .to(out)
-                    .as(DefaultDocumentFormatRegistry.PDF)
+                    .as(targetFormat)
                     .execute();
 
-            return out.toByteArray();
+            byte[] pdfBytes = out.toByteArray();
+            log.info("  LibreOffice conversion complete. PDF size: {} bytes, version: {}", 
+                    pdfBytes.length, pdfVersionService.getVersion(pdfBytes));
+
+            // ================================================================
+            // STEP 2: Flatten Transparency (if enabled)
+            // ================================================================
+            if (flattenEnabled) {
+                log.info("Step 2: Flattening transparency (method: {})...", flattenMethod);
+                
+                if ("GHOSTSCRIPT".equalsIgnoreCase(flattenMethod)) {
+                    // Use Ghostscript (requires gs to be installed)
+                    // Best quality - keeps text as text, flattens transparency properly
+                    try {
+                        pdfBytes = pdfVersionService.flattenWithGhostscript(pdfBytes);
+                        log.info("  Ghostscript flattening complete. New size: {} bytes", pdfBytes.length);
+                    } catch (Exception e) {
+                        log.warn("  Ghostscript failed ({}), falling back to rasterization", e.getMessage());
+                        pdfBytes = transparencyFlatteningService.flattenTransparency(pdfBytes, flattenDpi);
+                        log.info("  Rasterization fallback complete. New size: {} bytes", pdfBytes.length);
+                    }
+                } else {
+                    // Use rasterization (pure Java, no external tools)
+                    // Converts each page to an image - text becomes non-searchable
+                    pdfBytes = transparencyFlatteningService.flattenTransparency(pdfBytes, flattenDpi);
+                    log.info("  Rasterization complete at {} DPI. New size: {} bytes", flattenDpi, pdfBytes.length);
+                }
+            } else {
+                log.info("Step 2: Transparency flattening DISABLED (pdf.flatten.enabled=false)");
+            }
+
+            // ================================================================
+            // STEP 3: Set PDF Version to 1.3
+            // ================================================================
+            log.info("Step 3: Setting PDF version to 1.3...");
+            pdfBytes = pdfVersionService.downgradeTo13(pdfBytes);
+            log.info("  Final PDF: {} bytes, version: {}", pdfBytes.length, pdfVersionService.getVersion(pdfBytes));
+            
+            return pdfBytes;
         } catch (Exception e) {
-            throw new IllegalStateException("DOCX→PDF (LibreOffice) failed", e);
+            log.error("DOCX→PDF conversion failed", e);
+            throw new IllegalStateException("DOCX→PDF (LibreOffice) failed: " + e.getMessage(), e);
         }
     }
 

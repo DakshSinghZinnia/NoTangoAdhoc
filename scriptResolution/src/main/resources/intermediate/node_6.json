@@ -18,12 +18,12 @@
     "ProductName" : "Morgan Stanley VA II Asset Manager",
     "ContractStatus" : "ACTIVE",
     "InitialPremium" : "0.0",
-    "AccountValue" : "23503.68",
+    "AccountValue" : "23341.42",
     "SurrenderCharges" : "",
     "CashValue" : "",
     "TotalWithdrawals" : "42020.0",
     "AccumulatedCashValue" : "",
-    "SurrenderValue" : "23503.68",
+    "SurrenderValue" : "23341.42",
     "CostBasisPreTefra" : "",
     "CostBasisPostTefra" : "",
     "FaceAmount" : "",
@@ -39,7 +39,7 @@
     "LoanType" : "",
     "NetCashSurrenderValue" : "",
     "GMIR" : "",
-    "DeathBenefitValue" : "23503.68",
+    "DeathBenefitValue" : "23341.42",
     "IMOIndicator" : "",
     "SourceSystem" : "Zahara",
     "People_PrimaryOwner_FirstName" : "",
@@ -410,21 +410,18 @@
     "People_Broker_Email" : "",
     "People_Payor_Email" : "",
     "Delivery_Email_Address" : "",
-    "People_PrimaryOwner_FullName" : "Dtci",
+    "People_PrimaryOwner_FullName" : "DTCI",
     "Everly_Company_Address" : "",
     "PremiumFrequency" : "",
     "CC_CorrelationId " : "",
     "Owner_FullName" : "Dtci",
-    "SecondaryAddressee_FullName" : "",
-    "People_Payor_FullName" : "",
-    "DocName_ClientID" : "Reg 60 Incoming Replacement Notice_PRDN",
-    "PayorCopyFlag" : "",
     "AddressBlock" : {
-      "ConsigneeFullName" : "False",
       "Free_Form" : "BRAD YOUNG\r\nMEAN STREET\r\nSTREET 2\r\nALBANY NY 12204"
     },
     "GR3" : "",
-    "BR43" : ""
+    "BR43" : "",
+    "Recipient_Addblock" : "BRAD YOUNG\r\nMEAN STREET\r\nSTREET 2\r\nALBANY NY 12204",
+    "GR_Slife" : "contract"
   },
   "PlanCode_Lookup" : {
     "ProductType" : "VA",
@@ -438,7 +435,7 @@
   },
   "WebIndex" : {
     "Header" : "WebED:",
-    "DocumentDate" : "12102025",
+    "DocumentDate" : "12162025",
     "WebSystem" : "LC          ",
     "CorrType" : "ADHOC ",
     "WebKey1" : "381034              ",
@@ -456,10 +453,7 @@
     "ClientID" : "PRDN           ",
     "ExternalClientID" : "000000000000000",
     "SourceFileName" : "demo.pdf",
-    "WebIndex_Part1" : "WebED:12102025LC          ADHOC 381034                                  000000000P00000000433",
+    "WebIndex_Part1" : "WebED:12162025LC          ADHOC 381034                                  000000000P00000000433",
     "WebIndex_Part2" : "OWNER 0000000000                                          PRDN           000000000000000demo.pdf"
-  },
-  "Global_Rules" : {
-    "ProducerCopyType" : "Owner"
   }
 }
