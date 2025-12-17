@@ -78,6 +78,14 @@ def main():
     # Contract number to use
     contract_number = "381034"
     
+    # Get virtual environment Python path for cds_mapping.py (needs requests package)
+    cds_folder = base_dir / "cds data population"
+    venv_python = cds_folder / ".venv" / "bin" / "python3"
+    if not venv_python.exists():
+        print(f"ERROR: Virtual environment not found at {venv_python}")
+        print("Please create it with: python3 -m venv 'cds data population/.venv'")
+        return 1
+    
     print("\n" + "="*70)
     print("PIPELINE AUTOMATION SCRIPT")
     print(f"Contract Number: {contract_number}")
@@ -88,11 +96,10 @@ def main():
     print("# STEP 1: Running cds_mapping.py")
     print("#"*70)
     
-    cds_folder = base_dir / "cds data population"
     cds_script = cds_folder / "cds_mapping.py"
     
     if not run_command(
-        ["python3", str(cds_script)],
+        [str(venv_python), str(cds_script)],
         cwd=str(cds_folder),
         input_text=contract_number + "\n"
     ):
@@ -389,9 +396,9 @@ def main():
     
     print(f"\nAll {page_count} pages stamped successfully!")
     
-    # Step 15: Convert PDF to version 1.3 (removes transparency automatically)
+    # Step 16: Convert PDF to version 1.3 (removes transparency automatically)
     print("\n\n" + "#"*70)
-    print("# STEP 15: Converting PDF to version 1.3 (removes transparency)")
+    print("# STEP 16: Converting PDF to version 1.3 (removes transparency)")
     print("#"*70)
     
     pdf13_file = test_output_folder / "output-pdf13.pdf"
@@ -413,9 +420,9 @@ def main():
     shutil.copy2(str(pdf13_file), str(output_pdf_file))
     print(f"Done! Final PDF: {output_pdf_file}")
     
-    # Step 16: Final transparency check
+    # Step 17: Final transparency check
     print("\n\n" + "#"*70)
-    print("# STEP 16: Final Transparency Check")
+    print("# STEP 17: Final Transparency Check")
     print("#"*70)
     
     if not run_command(
@@ -435,9 +442,7 @@ def main():
     print("="*70)
     print(f"\nFinal JSON location: {pdfgen_input_file}")
     print(f"Final PDF location: {output_pdf_file}")
-    print(f"PDF 1.3 version (backup): {pdf13_file}")
-    print("\nThe final PDF is version 1.3 with NO transparency!")
-    print("Text is searchable and file size is optimized.")
+    print(f"PDF 1.3 version: {pdf13_file}")
     
     return 0
 
