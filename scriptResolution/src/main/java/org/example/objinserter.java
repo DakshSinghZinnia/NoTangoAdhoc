@@ -48,7 +48,7 @@ public class ObjInserter {
         barcode.setFontSize(16);
         barcode.setModuleWidth(2);
         barcode.setBarHeight(50);
-        barcode.setHumanReadableLocation(HumanReadableLocation.NONE);
+        barcode.setHumanReadableLocation(HumanReadableLocation.BOTTOM);
         barcode.setContent(barcodeValue);
 
         int width = barcode.getWidth();
