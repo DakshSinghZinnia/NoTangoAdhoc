@@ -131,6 +131,7 @@ public class ExprEval {
         List<Map.Entry<String, String>> node1 = new ArrayList<>();
         node1.add(entry("PlanCode_Lookup/ProductType", "Lookup(LetterData/PlanCode, 'PlanCode_Lookup', 27, \"\")"));
         node1.add(entry("LetterData/People_Annuitant_FullName", "Concat(LetterData/People_Annuitant_FirstName,' ',LetterData/People_Annuitant_LastName)"));
+        node1.add(entry("LetterData/People_Annuitant_FullName", "TitleCase(LetterData/People_Annuitant_FullName)"));
         node1.add(entry("LetterData/Owner_FullName", "Concat(LetterData/Owner_FirstName,' ',LetterData/Owner_LastName)"));
         node1.add(entry("LetterData/Owner_FullName", "Trim(TitleCase(LetterData/Owner_FullName))"));
         node1.add(entry("LetterData/M_Name", "if((LetterData/DocInfo/DocName == 'Annuitization Letter_MM' || LetterData/DocInfo/DocName == 'Attempt to Locate' || LetterData/DocInfo/DocName == 'Death Initial Notification_MM' || LetterData/DocInfo/DocName == 'NIGO Death Initial Notification Letter' || LetterData/DocInfo/DocName == 'Explanation of Benefit Letter Amount') ,TitleCase(LetterData/M_Name),LetterData/M_Name)"));
